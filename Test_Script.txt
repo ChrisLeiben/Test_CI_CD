@@ -1,0 +1,624 @@
+///$tab Main
+SET ThousandSep=' ';
+SET DecimalSep=',';
+SET MoneyThousandSep=' ';
+SET MoneyDecimalSep=',';
+SET MoneyFormat='# ##0,00 €;-# ##0,00 €';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD/MM/YYYY';
+SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
+SET FirstWeekDay=0;
+SET BrokenWeeks=0;
+SET ReferenceDay=4;
+SET FirstMonthOfYear=1;
+SET CollationLocale='fr-FR';
+SET CreateSearchIndexOnReload=1;
+SET MonthNames='janv.;févr.;mars;avr.;mai;juin;juil.;août;sept.;oct.;nov.;déc.';
+SET LongMonthNames='janvier;février;mars;avril;mai;juin;juillet;août;septembre;octobre;novembre;décembre';
+SET DayNames='lun.;mar.;mer.;jeu.;ven.;sam.;dim.';
+SET LongDayNames='lundi;mardi;mercredi;jeudi;vendredi;samedi;dimanche';
+SET NumericalAbbreviation='3:k;6:M;9:G;12:T;15:P;18:E;21:Z;24:Y;-3:m;-6:μ;-9:n;-12:p;-15:f;-18:a;-21:z;-24:y';
+
+SET CreateSearchIndexOnReload=0;
+
+SET v_FolderQVD_Path1 = 'lib://AG - DEV - QVD:DataFiles/';
+SET v_FolderQVD_Path2 = 'lib://AG - TEST - QVD:DataFiles/';
+SET v_FolderQVD_Path3 = 'lib://AG - UAT - QVD:DataFiles/';
+SET v_FolderQVD_Path4 = 'lib://AG - PROD - QVD:DataFiles/';
+
+SET v_FolderQVD_Path11 = 'lib://LBO - DEV - QVD:DataFiles/';
+SET v_FolderQVD_Path12 = 'lib://LBO - TEST - QVD:DataFiles/';
+SET v_FolderQVD_Path13 = 'lib://LBO - UAT - QVD + DATAMODEL:DataFiles/';
+SET v_FolderQVD_Path14 = 'lib://LBO - PROD - QVD + DATA MODEL:DataFiles/';
+
+SET v_FolderQVD_Path21 = 'lib://CHIP - DEV - QVD:DataFiles/';
+SET v_FolderQVD_Path22 = 'lib://CHIP - TEST - QVD:DataFiles/';
+SET v_FolderQVD_Path23 = 'lib://CHIP - UAT - QVD:DataFiles/';
+
+SET v_FolderQVD_Path31 = 'lib://RI - DEV - QVD:DataFiles/';
+SET v_FolderQVD_Path33 = 'lib://RI - UAT - QVD:DataFiles/';
+SET v_FolderQVD_Path34 = 'lib://RI - PROD - QVD:DataFiles/';
+
+SET v_FolderQVD_Path41 = 'lib://ESG - DEV - QVD:DataFiles/';
+SET v_FolderQVD_Path43 = 'lib://ESG - UAT - QVD:DataFiles/';
+SET v_FolderQVD_Path44 = 'lib://ESG - PROD - QVD:DataFiles/';
+
+SET v_FolderQVD_Path01 = 'lib://RSS Feeds:DataFiles/';
+
+// SET v_FolderQVD_Path_TEST  = 'lib://AG - TEST - QVD:DataFiles/';
+
+// SET v_FolderQVD_Path  = 'lib://AG - UAT - QVD:DataFiles/';
+
+// LIB CONNECT TO 'AG - PROD - QVD:CRM AG - Prod';
+
+// SET v_FolderQVD_Path ='lib://TEST_Environnement:DataFiles/';
+
+// SET v_FolderQVD_Path = 'lib://AG - TEST INCREMENTAL:DataFiles/';
+
+SET v_FolderQVD_Path = 'lib://AG - DEV - QVD:DataFiles/';
+
+SET v_FolderQVD_Path_Store = 'lib://AG - TEST - QVD:DataFiles/';
+
+SET v_FolderQVDSource_Path  = 'lib://AG - DEV - Sources:DataFiles/';
+
+SET v_FolderQVD_PathSources_ESG  = 'lib://ESG - DEV - Sources:DataFiles/';
+
+// LIB CONNECT TO 'AG - PROD - QVD:CRM AG - Prod';
+
+LIB CONNECT TO 'AG - DEV - DATAMODEL:CRM AG - DEV';
+
+///$tab Section
+SET vTable = 'Contact';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+// Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable)_2.qvd] (qvd);
+
+Exit Script
+///$tab Section 11
+Activite_tmp:
+Load Distinct
+    activityid as Act_Id
+FROM [$(v_FolderQVD_Path1)Activite.qvd] (qvd)
+WHERE activitytypecode = 'appointment' 
+	OR activitytypecode = 'phonecall' 
+    or activitytypecode = 'email';
+// WHERE activitytypecode = '$(vActivityTypeCodeAppointment)' 
+// 	OR activitytypecode = '$(vActivityTypeCodePhoneCall)' 
+//     or activitytypecode = '$(vActivityTypeCodeEmail)';
+
+left join(Activite_tmp)
+LOAD Distinct
+    _partyid_value					as	Con_Id,
+    _activityid_value				as	Act_Id
+FROM [$(v_FolderQVD_Path1)ActivityParty.qvd]
+(qvd)
+;
+
+Inner Join(Activite_tmp)
+LOAD Distinct
+	 contactid 	as Con_Id,
+     fullname	as Con_Lib_Name,
+     _parentcustomerid_value	as Soc_Id
+FROM [$(v_FolderQVD_Path1)Contact.qvd]
+(qvd);
+
+Left Join(Activite_tmp)
+LOAD Distinct
+	accountid as Soc_Id,
+	name as Soc_Lib_Name
+FROM [$(v_FolderQVD_Path1)Account.qvd]
+(qvd);
+
+Left Join(Activite_tmp)
+Load Distinct
+	Act_Id,
+    Con_Id			as Con_Id_2,
+    Con_Lib_Name	as Con_Lib_Name_2,
+    Soc_Lib_Name	as Soc_Lib_Name_2
+Resident Activite_tmp;
+
+Activite:
+NoConcatenate
+Load
+    Con_Id,
+    Con_Id_2,
+    Con_Lib_Name,
+    Con_Lib_Name_2,
+    Soc_Lib_Name,
+    Soc_Lib_Name_2,
+	count(DISTINCT Act_Id)	as Nb_Activite
+Resident Activite_tmp
+Where Con_Id <> Con_Id_2
+Group by Con_Id, Con_Id_2, Con_Lib_Name, Con_Lib_Name_2, Soc_Lib_Name, Soc_Lib_Name_2;
+
+Drop Table Activite_tmp;
+
+Exit Script
+
+
+///$tab Variable
+Temp_Variables:
+LOAD
+	Code,
+	Designation
+FROM
+$(v_FolderQVD_Path1)ListeParametre.qvd
+(qvd)
+Where Parametre = 'Variable';
+
+For i = 0 to NoOfRows('Temp_Variables') - 1
+
+	LET vName = peek('Code', i, 'Temp_Variables');
+
+	IF vName <> 'v_name_year_current' THEN
+
+		LET $(vName) = peek('Designation', i, 'Temp_Variables'); // Expression
+
+	ELSE
+
+		LET vLet = peek('Designation', i, 'Temp_Variables');
+		LET $(vName) = $(vLet);
+
+	ENDIF
+
+Next i
+
+DROP Table Temp_Variables;
+
+
+///$tab All tables
+SET vTable = 'Audit';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+// Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable)_2.qvd] (qvd);
+
+Exit Script
+///$tab Copie prod dev
+SET vTable = 'Account';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+SET vTable = 'Activite';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'ActivityParty';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Affaire';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Affaire_Contact_Intermediaire';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Affaire_Process_Stage';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Audit';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Actionnariat';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'CompanyPersona';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'CompanyProfile';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Dim_Connection_AllObjects';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Connection_Roles';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Contact';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Country';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Email';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Finance';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Fonds';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Fonds_concerne';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Operation';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Operation_Type';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'ShareActivity';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'StringMap';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Suivi_De_Valorisation';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'SystemUser';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Tags';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Tag_Clients';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Tag_Business1';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Tag_Business2';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Tag_Other';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Tag_Account';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Tag_Affaire';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Tag_Contact';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Vehicle';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Consolidation';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'Provider';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+SET vTable = 'ListChangeEntities';
+
+$(vTable):
+Load
+	*
+FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+
+//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
+//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
+Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+
+
+DO WHILE NoOfTables() > 0
+	LET tableName = TableName(0);
+	Trace Suppression de la table [$(tableName)];
+	DROP TABLE [$(tableName)];
+LOOP 
+
+
+Exit Script
+
