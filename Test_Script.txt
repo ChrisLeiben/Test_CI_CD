@@ -1,12 +1,20 @@
-///$tab Main
-SET ThousandSep=' ';
-SET DecimalSep=',';
-SET MoneyThousandSep=' ';
-SET MoneyDecimalSep=',';
-SET MoneyFormat='# ##0,00 €;-# ##0,00 €';
+///$tab Binary Load
+$(Include=[lib://AG - $(vEnvironnement) - Sources:DataFiles/Binary.qvs]); 
+
+// Binary '267ce649-5e70-4c3b-8551-547d396d0e54';	// DEV
+// Binary '3c5631d0-5d64-49bf-9206-39e78cfdbee3';	// TEST
+// Binary '44b6c9af-f8b9-48ea-9f8d-aebab4aeecd4';	// UAT
+// Binary '1eaac2c7-7a3e-4b1a-8771-14ae1533eea4';	// PROD
+
+SET ThousandSep=' ';
+SET DecimalSep='.';
+SET MoneyThousandSep=' ';
+SET MoneyDecimalSep='.';
+Set NumFormat='# ##0;-# ##0';
+SET MoneyFormat='# ##0 €;-# ##0 €';
 SET TimeFormat='hh:mm:ss';
 SET DateFormat='DD/MM/YYYY';
-SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
+SET TimestampFormat='DD/MM/YYYY hh:mm:ss';
 SET FirstWeekDay=0;
 SET BrokenWeeks=0;
 SET ReferenceDay=4;
@@ -17,69 +25,119 @@ SET MonthNames='janv.;févr.;mars;avr.;mai;juin;juil.;août;sept.;oct.;nov.;déc
 SET LongMonthNames='janvier;février;mars;avril;mai;juin;juillet;août;septembre;octobre;novembre;décembre';
 SET DayNames='lun.;mar.;mer.;jeu.;ven.;sam.;dim.';
 SET LongDayNames='lundi;mardi;mercredi;jeudi;vendredi;samedi;dimanche';
-SET NumericalAbbreviation='3:k;6:M;9:G;12:T;15:P;18:E;21:Z;24:Y;-3:m;-6:μ;-9:n;-12:p;-15:f;-18:a;-21:z;-24:y';
 
-SET CreateSearchIndexOnReload=0;
+LET vEnvironnement = SubField(GetSysAttr('spaceName'),' - ',2);
 
-SET v_FolderQVD_Path1 = 'lib://AG - DEV - QVD:DataFiles/';
-SET v_FolderQVD_Path2 = 'lib://AG - TEST - QVD:DataFiles/';
-SET v_FolderQVD_Path3 = 'lib://AG - UAT - QVD:DataFiles/';
-SET v_FolderQVD_Path4 = 'lib://AG - PROD - QVD:DataFiles/';
+// SET vEnvironnement = 'DEV';	//	DEV
+// SET vEnvironnement = 'TEST';	//	TEST
+// SET vEnvironnement = 'UAT';	//	UAT
+// SET vEnvironnement = 'PROD';	//	PROD
 
-SET v_FolderQVD_Path11 = 'lib://LBO - DEV - QVD:DataFiles/';
-SET v_FolderQVD_Path12 = 'lib://LBO - TEST - QVD:DataFiles/';
-SET v_FolderQVD_Path13 = 'lib://LBO - UAT - QVD + DATAMODEL:DataFiles/';
-SET v_FolderQVD_Path14 = 'lib://LBO - PROD - QVD + DATA MODEL:DataFiles/';
-
-SET v_FolderQVD_Path21 = 'lib://CHIP - DEV - QVD:DataFiles/';
-SET v_FolderQVD_Path22 = 'lib://CHIP - TEST - QVD:DataFiles/';
-SET v_FolderQVD_Path23 = 'lib://CHIP - UAT - QVD:DataFiles/';
-
-SET v_FolderQVD_Path31 = 'lib://RI - DEV - QVD:DataFiles/';
-SET v_FolderQVD_Path33 = 'lib://RI - UAT - QVD:DataFiles/';
-SET v_FolderQVD_Path34 = 'lib://RI - PROD - QVD:DataFiles/';
-
-SET v_FolderQVD_Path41 = 'lib://ESG - DEV - QVD:DataFiles/';
-SET v_FolderQVD_Path43 = 'lib://ESG - UAT - QVD:DataFiles/';
-SET v_FolderQVD_Path44 = 'lib://ESG - PROD - QVD:DataFiles/';
-
-SET v_FolderQVD_Path01 = 'lib://RSS Feeds:DataFiles/';
-
-// SET v_FolderQVD_Path_TEST  = 'lib://AG - TEST - QVD:DataFiles/';
-
-// SET v_FolderQVD_Path  = 'lib://AG - UAT - QVD:DataFiles/';
-
-// LIB CONNECT TO 'AG - PROD - QVD:CRM AG - Prod';
-
-// SET v_FolderQVD_Path ='lib://TEST_Environnement:DataFiles/';
-
-// SET v_FolderQVD_Path = 'lib://AG - TEST INCREMENTAL:DataFiles/';
-
-SET v_FolderQVD_Path = 'lib://AG - DEV - QVD:DataFiles/';
-
-SET v_FolderQVD_Path_Store = 'lib://AG - TEST - QVD:DataFiles/';
+SET v_FolderQVD_Path  = 'lib://AG - $(vEnvironnement) - QVD:DataFiles/';
 
 SET v_FolderQVDSource_Path  = 'lib://AG - DEV - Sources:DataFiles/';
 
-SET v_FolderQVD_PathSources_ESG  = 'lib://ESG - DEV - Sources:DataFiles/';
+SET vNbDaysInOut = 30;
+SET vNbDaysChangeHot = 7;
+SET vNbDaysChangeClean = 30;
 
-// LIB CONNECT TO 'AG - PROD - QVD:CRM AG - Prod';
+SET HidePrefix = '_';
 
-LIB CONNECT TO 'AG - DEV - DATAMODEL:CRM AG - DEV';
+Set NullValue=' ';
 
-///$tab Section
+TAG FIELD Soc_Lib_Universe WITH '$hidden';
 
+///$tab Sheet Variables
+SET vSourceSpace = 'lib://AG - DEV - Sources:DataFiles/';
 
+SET vGuid = 'ardian-prod';
+SET vURL = 'https://6mynfybxlvth0g6.eu.qlikcloud.com/sense/app/';
+SET vSheet = '/sheet/';
+SET vParam = '/state/analysis';
 
-Exit Script
+//DEV
+SET vIdNetwork_DEV					 = 'ea15feb6-36e3-4ebe-8d9a-f93c1bf1e5b3';
 
-///$tab Variable
+//TEST
+SET vIdNetwork_TEST					 = '7635f865-1b8c-45c9-8358-7a5c22ef5e44';
+
+//UAT
+SET vIdNetwork_UAT					 = '423eee18-5846-46c6-a69c-8f6db662ba5b';
+
+//PROD
+SET vIdNetwork_PROD					 = 'de2eb0e6-b4a7-48b3-8f33-8a7b3181d4e0';
+
+LET vIdNetwork						 = '$(vIdNetwork_$(vEnvironnement))';
+
+SET vFeuilLandingPage				 = '49137d21-b83c-4e4a-b552-e0b77f5c735f';
+SET vFeuilLandingPageAdvanced		 = '0a26acf7-e1ff-4d96-9b47-8754281a1881';
+SET vFeuilHelp						 = 'e533f2f8-3c93-42c5-ade9-5141593d1ef8';
+
+SET vFeuilSearch					 = 'f8efe8c0-78dd-4d85-bafa-30722117c91d';
+SET vFeuilSearchFlat				 = '5a9e3cc2-424c-4831-b15f-b15135353f44';
+SET vFeuilChase						 = '8102cf54-f255-4168-9699-abcbd1d62d53';
+SET vFeuilDealflow					 = '6a862ff4-bdde-40c9-86fe-2e708fbf56f4';
+SET vFeuilFollowUp					 = '32886a88-d6c0-4b9d-aceb-fdf925fa415d';
+SET vFeuilBusinessTrip				 = '364f03be-5f2b-4926-abba-bf194a756f53';
+SET vFeuilDealflowKPI				 = '9974c780-5577-490a-a760-d8a9d3b8f276';
+SET vFeuilPortfolioKPI				 = 'dd2c5d3f-91c2-4906-ae48-0bf346ddc2ed';
+SET vFeuilProspectionKPI			 = 'be56561f-34d2-4a13-b105-919548360197';
+SET vFeuilTeamActivity				 = '085aec43-44ed-41d7-afe4-7bf9a63ab3fe';
+SET vFeuilAdvisorFundCoverageKPI	 = '72767871-7e41-42db-bbdc-3d336d17327c';
+SET vFeuilTagsKPI					 = 'd50dc114-1fb8-43d5-8325-8e2f301cb935';
+SET vFeuilMarketDealKPI				 = 'ace60874-f074-4616-8ba8-120e416ac70a';
+SET vFeuilBigFishKPI				 = 'e87edbd9-1c60-4ead-b3e0-ca3ba2e7086f';
+SET vFeuilEvent						 = 'd510f8bc-31be-4562-ae8e-2885637ee39e';
+SET vFeuilDealflowNew				 = '6a862ff4-bdde-40c9-86fe-2e708fbf56f4';
+SET vFeuilDealflowAnalysis			 = '9f77b45f-51da-4d4e-9b68-1b8e4eb5c68c';
+// SET vFeuilOnDemand = 'e38c6b08-1f68-433e-a748-e67215fc435b';
+
+SET vFeuilFinance					 = '1d62e40a-f081-4d98-b74e-12179d8a7ef6';
+SET vFeuilBuildUp					 = '3dc00be9-0f31-492f-bcbe-d42bda7ad133';
+SET vFeuilOnGoingExist				 = '042b89ef-60d2-4494-9778-eb752ddc1d7a';
+SET vFeuilOperation					 = '0bfc5b54-a6f4-4654-b855-44961e1cf9f5';
+SET vFeuilCostFMV					 = '795e0c69-d6a9-416c-8cae-2436ac3e77fe';
+SET vFeuilFocus						 = 'e30daedd-c5da-4736-b588-2d3e465257ea';
+SET vFeuilAdvisorCoverage			 = '22e6fc52-8186-4beb-9923-0239713560da';
+SET vFeuilFundCoverage				 = '941c89f2-2b64-4a6f-9acb-f53e53f77309';
+
+SET vFeuilTrends					 = '51ba98b6-520d-436e-9e6e-553af8a95444';
+SET vFeuilDatafeed					 = '89323e63-a979-4202-ae0e-2fe08fcd0d61';
+SET vFeuilKPI						 = '799471c2-9042-4f61-880e-637c771c38dd';
+SET vFeuilMarketDealsDB				 = '746fffea-ae03-4544-9677-e373dfa6f581';
+SET vFeuilJoural					 = '882d50c0-65da-4db2-8ecc-1a2dab36fd10';
+SET vFeuilMyClean					 = 'ec3a1f8b-0e16-448f-809a-846dd439b8bf';
+SET vFeuilQOI						 = '2174037e-1873-45d4-930f-42b64c711e76';
+
+SET vFeuilMarketDeals				 = '4aa089fe-22ac-4fd4-a4cc-7a26a79e2d8d';
+SET vFeuilAdvisorMapping			 = 'c5334c46-c353-49c8-9803-ec49ae736e31';
+SET vFeuilFundsMapping				 = 'b22d6aab-e3bf-4508-bffd-a034a19d7b78';
+SET vFeuilLPs						 = 'e1b6cde1-09c5-496e-bfb1-3e7f84df3cf6';
+SET vFeuilCluster					 = '3de13aff-707a-47ac-afaa-01cf8e2f5ecb';
+//SET vFeuilNicheMarket = '3dd59986-74e3-4c37-8afa-b074d8694068';
+
+SET vFeuilLandingPageNetwork		 = 'pPmqF';
+SET vFeuilGraph						 = 'f4546287-eca2-4811-9fa2-706cad36800e';
+SET vFeuilGraphAsATable				 = '9b22f3e7-2af3-4fba-9d2a-fcf33a900e18';
+SET vFeuilGraphFull					 = 'f8b83f26-58ab-4c63-a02e-803582b36f56';
+SET vFeuilGraphShortPath			 = '7fa80c0d-38bc-4115-84ba-3d90f08b905e';
+
+SET vFeuilDataProvider				 = '5cfb45b9-2a10-4ec2-a34c-1ae42aea06b2';
+
+SET vFeuilProspectionMonitoring		 = 'GRPCEaP';
+SET vFeuilHelpOrigination			 = 'CYNpgYM';
+
+///$tab Variables
+// Include des variables de couleurs
+$(Include=[$(v_FolderQVDSource_Path)Variables couleurs.qvs]);
+//$(Include=[$(v_FolderQVDSource_Path)Variables Libellés.qvs]);
+
 Temp_Variables:
 LOAD
 	Code,
 	Designation
 FROM
-$(v_FolderQVD_Path1)ListeParametre.qvd
+$(v_FolderQVD_Path)ListeParametre.qvd
 (qvd)
 Where Parametre = 'Variable';
 
@@ -102,456 +160,253 @@ Next i
 
 DROP Table Temp_Variables;
 
+/** Variable Couleur **/
+
+Temp_Variable_Couleur:
+LOAD
+	trim(CodeCouleur) as CodeCouleur,
+    Couleur
+FROM [$(v_FolderQVD_Path)PaletteCouleur.qvd]
+(qvd)
+Where WildMatch(CodeCouleur, 'A suivre', 'A suivre +1A', 'A Contacter', 'A relancer', 'Fermé', 'Long shot', 'Long shot +3A' ,'Ouvert', 'Qualification')
+;
+
+For j = 0 to NoOfRows('Temp_Variable_Couleur') - 1
+	
+    LET vSecteur = Replace(Peek('CodeCouleur', j, 'Temp_Variable_Couleur'), ' ', '');
+	LET '$(vSecteur)' = peek('Couleur', j, 'Temp_Variable_Couleur');
+
+next j
+
+DROP Table Temp_Variable_Couleur;
+
+/** Fin Variable Couleur **/
+
+Tag_Name:
+NoConcatenate
+Load Distinct
+    Tag_Lib_Name
+Resident Tags
+Where upper(Tag_Id) = upper('$(vTagIdNicheMarket)');
+
+LET vTagNameNicheMarket = Peek('Tag_Lib_Name',-1,'Tag_Name');
+
+Drop Table Tag_Name;
+
+// SET vAppLandingPage_DEV				 = '8ccbb156-d4d3-466e-811d-91e15c694ec5'; // Dev
+// SET vAppLandingPage_TEST			 = '8ccbb156-d4d3-466e-811d-91e15c694ec5'; // Test
+// SET vAppLandingPage_UAT				 = '0c51874d-b022-487f-b2e8-180e7b7fd5a7'; // UAT
+// SET vAppLandingPage_PROD			 = '8ccbb156-d4d3-466e-811d-91e15c694ec5'; // Prod
+
+// LET vAppLandingPage					 = '$(vAppLandingPage_$(vEnvironnement))';
+
+// SET vIdPrincipal_DEV				 = 'd485f727-5058-436c-aece-5fd2061097ec'; // Dev
+// SET vIdPrincipal_TEST				 = 'd485f727-5058-436c-aece-5fd2061097ec'; // Test
+// SET vIdPrincipal_UAT				 = '6749eef8-ddbe-4e91-9c37-c1d3f2dbc25f'; // UAT
+// SET vIdPrincipal_PROD				 = 'd485f727-5058-436c-aece-5fd2061097ec'; // Prod
+
+// LET vIdPrincipal					 = '$(vIdPrincipal_$(vEnvironnement))';
+
+// SET vFeuilSearch					 = 'a6abcb12-c136-425e-83c1-76dd8bba21eb';
+// SET vFeuilChase						 = '8102cf54-f255-4168-9699-abcbd1d62d53';
+// SET vFeuilDealflow					 = 'b5ca3d21-1b44-4fb3-bc1d-a74a6cc66154';
+// SET vFeuilFollowUp					 = '32886a88-d6c0-4b9d-aceb-fdf925fa415d';
+// SET vFeuilBusinessTrip				 = '364f03be-5f2b-4926-abba-bf194a756f53';
+// SET vFeuilDealflowKPI				 = '9974c780-5577-490a-a760-d8a9d3b8f276';
+// SET vFeuilPortfolioKPI				 = 'dd2c5d3f-91c2-4906-ae48-0bf346ddc2ed';
+// SET vFeuilProspectionKPI			 = 'be56561f-34d2-4a13-b105-919548360197';
+// SET vFeuilTeamActivity				 = '085aec43-44ed-41d7-afe4-7bf9a63ab3fe';
+// SET vFeuilAdvisorFundCoverageKPI	 = '72767871-7e41-42db-bbdc-3d336d17327c';
+// SET vFeuilTagsKPI					 = 'e1f9380c-55b7-49bb-87cc-297e240d381a';
+// SET vFeuilMarketDealKPI				 = 'ace60874-f074-4616-8ba8-120e416ac70a';
+// SET vFeuilBigFishKPI				 = 'e87edbd9-1c60-4ead-b3e0-ca3ba2e7086f';
+// SET vFeuilEvent						 = 'd510f8bc-31be-4562-ae8e-2885637ee39e';
+
+// SET vFeuilFinance					 = '1d62e40a-f081-4d98-b74e-12179d8a7ef6';
+// SET vFeuilBuildUp					 = '3dc00be9-0f31-492f-bcbe-d42bda7ad133';
+// SET vFeuilOnGoingExist				 = '042b89ef-60d2-4494-9778-eb752ddc1d7a';
+// SET vFeuilOperation					 = '0bfc5b54-a6f4-4654-b855-44961e1cf9f5';
+// SET vFeuilCostFMV					 = '795e0c69-d6a9-416c-8cae-2436ac3e77fe';
+// SET vFeuilFocus						 = 'e30daedd-c5da-4736-b588-2d3e465257ea';
+// SET vFeuilAdvisorFundCoverage		 = '22e6fc52-8186-4beb-9923-0239713560da';
 
-///$tab All tables
-SET vTable = 'Audit';
+// SET vFeuilMarketDeals				 = '4aa089fe-22ac-4fd4-a4cc-7a26a79e2d8d';
+// SET vFeuilAdvisorMapping			 = 'c5334c46-c353-49c8-9803-ec49ae736e31';
+// SET vFeuilFundsMapping				 = 'b22d6aab-e3bf-4508-bffd-a034a19d7b78';
+// SET vFeuilLPs						 = 'e1b6cde1-09c5-496e-bfb1-3e7f84df3cf6';
+// SET vFeuilCluster					 = '3de13aff-707a-47ac-afaa-01cf8e2f5ecb';
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+// SET vFeuilTrends					 = '37443164-95b6-4791-ab8e-161289e1ea90';
+// SET vFeuilDatafeed					 = '89323e63-a979-4202-ae0e-2fe08fcd0d61';
+// SET vFeuilMyClean					 = '317ca4e1-cfd0-4a2c-9728-703d880cffc0';
+// SET vFeuilQOI						 = '9cdd43f4-f570-4243-a32f-1e6c18d74546';
 
-// Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable)_2.qvd] (qvd);
+///$tab Add / Correct
+LET vCategorieSocieteFonds = 'Fonds d''''investissements';
+LET vTagNameLP = 'LP''''s Category';
 
-Exit Script
-///$tab Copie prod dev
-SET vTable = 'Account';
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+LET vAnneeFiscaleDefaut = if(num(Month(Today())) >= 7, Year(Today()), Year(Today()) - 1);
 
-SET vTable = 'Activite';
+///$tab Colors
+// Couleur des secteurs
+CouleurSecteur:
+LOAD
+    Secteur,
+    [Secteur Short],
+    Couleur
+FROM [$(v_FolderQVDSource_Path)Palette couleur.xlsx]
+(ooxml, embedded labels, table is Secteur);
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+LET NumRows=NoOfRows('CouleurSecteur');
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+LET vCouleurSecteurSociete = 'pick(mixmatch(Soc_Lib_Secteur';
+LET vCouleurSecteurSocieteShort = 'pick(mixmatch(Soc_Lib_Secteur_Short';
+LET vCouleurSecteurFin = '';
 
+FOR i=0 to $(NumRows)-1
 
-SET vTable = 'ActivityParty';
+    // LET vSecteur$(i)=Peek('Secteur',$(i));
+    // LET vCouleurSecteur$(i)=Peek('Couleur',$(i));
+    // LET vCouleurSecteur = '$(vCouleurSecteur)' & ',' & chr(39) & '$(vSecteur$(i))' & chr(39);
+    // LET vCouleurSecteurFin = '$(vCouleurSecteurFin)' & ',' & chr(13) & '$(vCouleurSecteur$(i))';
+    LET vCouleurSecteurSociete = '$(vCouleurSecteurSociete)' & ',' & chr(39) & replace(Peek('Secteur',$(i)),chr(39),chr(39) & '& chr(39) & ' & chr(39)) & chr(39);
+    LET vCouleurSecteurSocieteShort = '$(vCouleurSecteurSocieteShort)' & ',' & chr(39) & replace(Peek('Secteur Short',$(i)),chr(39),chr(39) & '& chr(39) & ' & chr(39)) & chr(39);
+    LET vCouleurSecteurFin = '$(vCouleurSecteurFin)' & ',' & chr(13) & Peek('Couleur',$(i));
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+NEXT;
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+LET vCouleurSecteurSociete = '$(vCouleurSecteurSociete)' & ')' & '$(vCouleurSecteurFin)' & chr(13) & ')';
+LET vCouleurSecteurSocieteShort = '$(vCouleurSecteurSocieteShort)' & ')' & '$(vCouleurSecteurFin)' & chr(13) & ')';
+LET vCouleurSecteurContact = replace('$(vCouleurSecteurSociete)','mixmatch(Soc_Lib_Secteur','mixmatch(Con_Lib_Societe_Secteur');
+LET vCouleurSecteurContactShort = replace('$(vCouleurSecteurSocieteShort)','mixmatch(Soc_Lib_Secteur_Short','mixmatch(Con_Lib_Societe_Secteur_Short');
+LET vCouleurSecteurInterm = replace('$(vCouleurSecteurSociete)','mixmatch(Soc_Lib_Secteur','mixmatch(Interm_Lib_Secteur');
+LET vCouleurSecteurIntermShort = replace('$(vCouleurSecteurSocieteShort)','mixmatch(Soc_Lib_Secteur_Short','mixmatch(Interm_Lib_Secteur_Short');
 
 
-SET vTable = 'Affaire';
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+// Couleur des pays
+CouleurPays:
+LOAD
+    Pays,
+    Couleur
+FROM [$(v_FolderQVDSource_Path)Palette couleur.xlsx]
+(ooxml, embedded labels, table is Pays);
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+LET NumRows=NoOfRows('CouleurPays');
 
+LET vCouleurPays = 'pick(mixmatch(Pays';
+LET vCouleurPaysFin = '';
 
-SET vTable = 'Affaire_Contact_Intermediaire';
+FOR i=0 to $(NumRows)-1
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+    LET vCouleurPays = '$(vCouleurPays)' & ',' & chr(39) & replace(Peek('Pays',$(i)),chr(39),chr(39) & '& chr(39) & ' & chr(39)) & chr(39);
+    LET vCouleurPaysFin = '$(vCouleurPaysFin)' & ',' & chr(13) & Peek('Couleur',$(i));
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+NEXT;
 
+LET vCouleurPays = '$(vCouleurPays)' & ')' & '$(vCouleurPaysFin)' & chr(13) & ')';
+LET vCouleurPaysSociete = replace('$(vCouleurPays)','mixmatch(Pays','mixmatch(Soc_Lib_Adresse1_Pays');
+LET vCouleurPaysContact = replace('$(vCouleurPays)','mixmatch(Pays','mixmatch(Con_Lib_Country');
 
-SET vTable = 'Affaire_Process_Stage';
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+// Couleur des catégories
+CouleurCategorie:
+LOAD
+    Catégorie,
+    Couleur
+FROM [$(v_FolderQVDSource_Path)Palette couleur.xlsx]
+(ooxml, embedded labels, table is Catégorie);
 
+LET NumRows=NoOfRows('CouleurCategorie');
 
-SET vTable = 'Audit';
+LET vCouleurCategorie = 'pick(mixmatch(Soc_Lib_Categorie';
+LET vCouleurCategorieFin = '';
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+FOR i=0 to $(NumRows)-1
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+    LET vCouleurCategorie = '$(vCouleurCategorie)' & ',' & chr(39) & replace(Peek('Catégorie',$(i)),chr(39),chr(39) & '& chr(39) & ' & chr(39)) & chr(39);
+    LET vCouleurCategorieFin = '$(vCouleurCategorieFin)' & ',' & chr(13) & Peek('Couleur',$(i));
 
+NEXT;
 
-SET vTable = 'Actionnariat';
+LET vCouleurCategorie = '$(vCouleurCategorie)' & ')' & '$(vCouleurCategorieFin)' & chr(13) & ')';
+LET vCouleurCategorieInterm = replace('$(vCouleurCategorie)','mixmatch(Soc_Lib_Categorie','mixmatch(Interm_Lib_Categorie');
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
 
+// Couleur des statuts des affaires
+CouleurStatut:
+LOAD
+    Statut,
+    Couleur
+FROM [$(v_FolderQVDSource_Path)Palette couleur.xlsx]
+(ooxml, embedded labels, table is [Statut Affaire]);
 
-SET vTable = 'CompanyPersona';
+LET NumRows=NoOfRows('CouleurStatut');
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+LET vCouleurStatut = 'pick(mixmatch(Aff_Lib_Statut';
+LET vCouleurStatutFin = '';
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+FOR i=0 to $(NumRows)-1
 
+    LET vCouleurStatut = '$(vCouleurStatut)' & ',' & chr(39) & replace(Peek('Statut',$(i)),chr(39),chr(39) & '& chr(39) & ' & chr(39)) & chr(39);
+    LET vCouleurStatutFin = '$(vCouleurStatutFin)' & ',' & chr(13) & Peek('Couleur',$(i));
 
-SET vTable = 'CompanyProfile';
+NEXT;
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+LET vCouleurStatut = '$(vCouleurStatut)' & ')' & '$(vCouleurStatutFin)' & chr(13) & ')';
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
 
 
-SET vTable = 'Dim_Connection_AllObjects';
+// Couleur des origines des affaires
+CouleurOrigine:
+LOAD
+    Origine,
+    Couleur
+FROM [$(v_FolderQVDSource_Path)Palette couleur.xlsx]
+(ooxml, embedded labels, table is [Origine Affaire]);
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+LET NumRows=NoOfRows('CouleurOrigine');
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+LET vCouleurOrigine = 'pick(mixmatch(Aff_Lib_Origine';
+LET vCouleurOrigineFin = '';
 
+FOR i=0 to $(NumRows)-1
 
-SET vTable = 'Connection_Roles';
+    LET vCouleurOrigine = '$(vCouleurOrigine)' & ',' & chr(39) & replace(Peek('Origine',$(i)),chr(39),chr(39) & '& chr(39) & ' & chr(39)) & chr(39);
+    LET vCouleurOrigineFin = '$(vCouleurOrigineFin)' & ',' & chr(13) & Peek('Couleur',$(i));
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
+NEXT;
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
+LET vCouleurOrigine = '$(vCouleurOrigine)' & ')' & '$(vCouleurOrigineFin)' & chr(13) & ')';
 
+Drop Table CouleurSecteur;
+Drop Table CouleurPays;
+Drop Table CouleurCategorie;
+Drop Table CouleurStatut;
+Drop Table CouleurOrigine;
+///$tab Help
+[Sheet1]:
+LOAD
+	[THEME],
+	[FENETRE],
+	[DESCRIPTION]
+ FROM [$(v_FolderQVDSource_Path)LANDING_PAGE_HELP.xlsx]
+(ooxml, embedded labels, table is Sheet1);
 
-SET vTable = 'Contact';
+///$tab RSS News Feed
+Articles:
+LOAD
+//     Art_Lib_Source,
+    Art_Lib_Title,
+    Art_Link,
+//     Art_Lin_Description,
+    Art_Date_Publication
+FROM [lib://RSS Feeds:DataFiles/RSSFeeds.qvd](qvd);
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
 
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Country';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Email';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Finance';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Fonds';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Fonds_concerne';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Operation';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Operation_Type';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'ShareActivity';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'StringMap';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Suivi_De_Valorisation';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'SystemUser';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Tags';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Tag_Clients';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Tag_Business1';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Tag_Business2';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Tag_Other';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Tag_Account';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Tag_Affaire';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Tag_Contact';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Vehicle';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Consolidation';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'Provider';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-SET vTable = 'ListChangeEntities';
-
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path4)$(vTable).qvd] (qvd);
-
-//Store $(vTable) into [$(v_FolderQVD_Path3)$(vTable).qvd] (qvd);
-//Store $(vTable) into [$(v_FolderQVD_Path2)$(vTable).qvd] (qvd);
-Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
-
-
-DO WHILE NoOfTables() > 0
-	LET tableName = TableName(0);
-	Trace Suppression de la table [$(tableName)];
-	DROP TABLE [$(tableName)];
-LOOP 
-
-
-Exit Script
-
+///$tab Exit script
+exit Script;
