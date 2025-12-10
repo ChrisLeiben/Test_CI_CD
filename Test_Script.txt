@@ -68,77 +68,10 @@ SET v_FolderQVD_PathSources_ESG  = 'lib://ESG - DEV - Sources:DataFiles/';
 LIB CONNECT TO 'AG - DEV - DATAMODEL:CRM AG - DEV';
 
 ///$tab Section
-SET vTable = 'Contact';
 
-$(vTable):
-Load
-	*
-FROM [$(v_FolderQVD_Path1)$(vTable).qvd] (qvd);
 
-// Store $(vTable) into [$(v_FolderQVD_Path1)$(vTable)_2.qvd] (qvd);
 
 Exit Script
-///$tab Section 11
-Activite_tmp:
-Load Distinct
-    activityid as Act_Id
-FROM [$(v_FolderQVD_Path1)Activite.qvd] (qvd)
-WHERE activitytypecode = 'appointment' 
-	OR activitytypecode = 'phonecall' 
-    or activitytypecode = 'email';
-// WHERE activitytypecode = '$(vActivityTypeCodeAppointment)' 
-// 	OR activitytypecode = '$(vActivityTypeCodePhoneCall)' 
-//     or activitytypecode = '$(vActivityTypeCodeEmail)';
-
-left join(Activite_tmp)
-LOAD Distinct
-    _partyid_value					as	Con_Id,
-    _activityid_value				as	Act_Id
-FROM [$(v_FolderQVD_Path1)ActivityParty.qvd]
-(qvd)
-;
-
-Inner Join(Activite_tmp)
-LOAD Distinct
-	 contactid 	as Con_Id,
-     fullname	as Con_Lib_Name,
-     _parentcustomerid_value	as Soc_Id
-FROM [$(v_FolderQVD_Path1)Contact.qvd]
-(qvd);
-
-Left Join(Activite_tmp)
-LOAD Distinct
-	accountid as Soc_Id,
-	name as Soc_Lib_Name
-FROM [$(v_FolderQVD_Path1)Account.qvd]
-(qvd);
-
-Left Join(Activite_tmp)
-Load Distinct
-	Act_Id,
-    Con_Id			as Con_Id_2,
-    Con_Lib_Name	as Con_Lib_Name_2,
-    Soc_Lib_Name	as Soc_Lib_Name_2
-Resident Activite_tmp;
-
-Activite:
-NoConcatenate
-Load
-    Con_Id,
-    Con_Id_2,
-    Con_Lib_Name,
-    Con_Lib_Name_2,
-    Soc_Lib_Name,
-    Soc_Lib_Name_2,
-	count(DISTINCT Act_Id)	as Nb_Activite
-Resident Activite_tmp
-Where Con_Id <> Con_Id_2
-Group by Con_Id, Con_Id_2, Con_Lib_Name, Con_Lib_Name_2, Soc_Lib_Name, Soc_Lib_Name_2;
-
-Drop Table Activite_tmp;
-
-Exit Script
-
 
 ///$tab Variable
 Temp_Variables:
